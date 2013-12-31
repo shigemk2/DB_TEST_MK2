@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
 require 'twitter'
+require 'mysql'
 require 'yaml'
+require 'time'
 conf_file = './config.yml'
 
 client = Twitter::REST::Client.new do |config|
@@ -11,6 +14,10 @@ client = Twitter::REST::Client.new do |config|
   config.access_token_secret = setting['access_token_secret']
 end
 
-client.user_timeline("shigemk2", :count => 3).collect do |tweet|
-  p "#{tweet.user.screen_name}: #{tweet.text}"
+timeline = client.user_timeline("shigemk2", :count => 150).collect do |tweet|
+  p "#{tweet.created_at} #{tweet.user.screen_name}: #{tweet.text}"
+
+  my = Mysql.connect("localhost", "root", nil, "TWITTER")
+  stmt = my.prepare('insert into TWITTER (TIME,NAME,COMMENT) values (?,?,?)')
+  stmt.execute Time.parse(tweet.created_at.to_s).to_i, tweet.user.screen_name, tweet.text
 end
